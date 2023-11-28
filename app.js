@@ -1,18 +1,16 @@
 const express = require('express');
 const multer = require('multer');
-const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
 const app = express();
+const sharp = require('sharp'); 
 const port = 3000;
 
-// Ensure directories exist
 const originalsDir = 'storage/originals';
 const thumbnailsDir = 'storage/thumbnails';
 fs.mkdirSync(originalsDir, { recursive: true });
 fs.mkdirSync(thumbnailsDir, { recursive: true });
 
-// Configure storage for original images
 const storage = multer.diskStorage({
   destination: function(req, file, cb) {
     cb(null, originalsDir);
@@ -30,18 +28,21 @@ app.post('/upload', upload.array('image', 10), async (req, res) => {
   try {
     if (req.files) {
       await Promise.all(req.files.map(async file => {
-        // ... [your existing thumbnail creation code]
+        const thumbnailFilename = `thumbnail-${file.originalname}`;
+        const thumbnailPath = path.join(thumbnailsDir, thumbnailFilename);
 
-        // Create metadata
+        // Resize image and save as thumbnail
+        await sharp(file.path)
+          .resize(200, 200)
+          .toFile(thumbnailPath);
+
         const metadata = {
           originalName: file.originalname,
           path: file.path,
-          thumbnailPath: path.join(thumbnailsDir, file.originalname),
+          thumbnailPath: thumbnailPath,
           uploadDate: new Date().toISOString()
-          // Add more metadata as needed
         };
 
-        // Save metadata to a JSON file
         fs.writeFileSync(
           path.join(originalsDir, file.originalname + '.json'),
           JSON.stringify(metadata, null, 2)
@@ -56,11 +57,11 @@ app.post('/upload', upload.array('image', 10), async (req, res) => {
   }
 });
 
+
 app.get('/download/:filename', (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(originalsDir, filename);
 
-  // Check if file exists
   if (fs.existsSync(filePath)) {
     res.download(filePath); // Set the Content-Disposition header to attachment to prompt download
   } else {
@@ -68,7 +69,6 @@ app.get('/download/:filename', (req, res) => {
   }
 });
 
-// Start the server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
