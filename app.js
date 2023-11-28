@@ -1,128 +1,182 @@
-const express = require('express');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const app = express();
-const sharp = require('sharp');
-const catalogueController = require('./catalogueController'); // Import the catalogue controller
+import inquirer from 'inquirer';
+import fileSelector from 'inquirer-file-tree-selection-prompt';
+import path from 'path';
+import fs from 'fs';
+import os from 'os';
+import chalk from 'chalk';
+inquirer.registerPrompt('file-tree-selection', fileSelector);
 
-const port = 3000;
-
-const originalsDir = 'storage/originals';
-const thumbnailsDir = 'storage/thumbnails';
-fs.mkdirSync(originalsDir, { recursive: true });
-fs.mkdirSync(thumbnailsDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, originalsDir);
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  },
-});
-
-const upload = multer({ storage: storage });
-
-app.use(express.json());
-
-app.delete('/delete/:filename', (req, res) => {
-  const filename = req.params.filename;
-  const filePath = path.join(originalsDir, filename);
-  const thumbnailPath = path.join(thumbnailsDir, `thumbnail-${filename}`);
-
-  if (fs.existsSync(filePath)) {
-    fs.unlink(filePath, (err) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).send('Error deleting the original file');
-      }
-
-      // Optionally delete the thumbnail
-      if (fs.existsSync(thumbnailPath)) {
-        fs.unlink(thumbnailPath, (err) => {
-          if (err) {
-            console.error(err);
-            return res.status(500).send('Error deleting the thumbnail file');
-          }
-        });
-      }
-
-      // Optionally update metadata file
-      // ... [Your code to update/delete the metadata from metadata.json]
-
-      res.send('File deleted successfully');
-    });
-  } else {
-    res.status(404).send('File not found');
-  }
-});
-
-app.post('/upload', upload.array('image', 10), async (req, res) => {
+async function uploadImage() {
   try {
-    let metadataArray = [];
+    const homeDirectory = os.homedir();
 
-    const metadataFilePath = path.join('storage', 'metadata.json');
-    if (fs.existsSync(metadataFilePath)) {
-      const existingMetadata = fs.readFileSync(metadataFilePath);
-      metadataArray = JSON.parse(existingMetadata);
-    }
+    const answers = await inquirer.prompt([
+      {
+        type: 'file-tree-selection',
+        name: 'filePaths',
+        message:
+          'Select .png or .jpg files to upload (use space to select, enter to submit):',
+        multiple: true,
+        root: homeDirectory,
+        onlyShowValid: true,
+        validate: (input) => {
+          const fileStat = fs.statSync(input);
+          const name = input.split(path.sep).pop();
+          const extension = name.split('.').pop().toLowerCase();
 
-    if (req.files) {
-      await Promise.all(
-        req.files.map(async (file) => {
-          const thumbnailFilename = `thumbnail-${file.originalname}`;
-          const thumbnailPath = path.join(thumbnailsDir, thumbnailFilename);
+          return (
+            name[0] !== '.' &&
+            (fileStat.isDirectory() ||
+              extension === 'jpg' ||
+              extension === 'jpeg' ||
+              extension === 'png')
+          );
+        },
+      },
+    ]);
 
-          if (!fs.existsSync(thumbnailPath)) {
-            await sharp(file.path)
-              .resize({
-                width: 200,
-                height: 200,
-                fit: sharp.fit.inside,
-              })
-              .toFile(thumbnailPath);
+    const selectedFiles = answers.filePaths.filter((filePath) => {
+      const fileStat = fs.statSync(filePath);
+      return fileStat.isFile();
+    });
 
-            const metadata = {
-              originalName: file.originalname,
-              path: file.path,
-              thumbnailPath: thumbnailPath,
-              uploadDate: new Date().toISOString(),
-            };
-
-            metadataArray.push(metadata);
-          }
-        })
-      );
-
-      fs.writeFileSync(
-        metadataFilePath,
-        JSON.stringify(metadataArray, null, 2)
-      );
-    }
-
-    res.send(
-      `${req.files.length} files uploaded and thumbnails created successfully.`
-    );
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Error processing files');
+    console.log(`Files selected for upload: ${selectedFiles.join(', ')}`);
+  } catch (error) {
+    console.error('Error:', error);
   }
-});
+}
 
-app.get('/download/:filename', (req, res) => {
-  const filename = req.params.filename;
-  const filePath = path.join(originalsDir, filename);
+async function imagesMenu() {
+  try {
+    const answers = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'imageChoice',
+        message: 'Images Menu',
+        choices: ['All Images', 'Upload', 'Back to Main Menu'],
+      },
+    ]);
 
-  if (fs.existsSync(filePath)) {
-    res.download(filePath);
-  } else {
-    res.status(404).send('File not found');
+    switch (answers.imageChoice) {
+      case 'All Images':
+        // Implement your logic for showing all images
+        break;
+      case 'Upload':
+        await uploadImage();
+        break;
+      case 'Back to Main Menu':
+        mainMenu();
+        return;
+      default:
+        console.log('Invalid choice');
+    }
+    await imagesMenu();
+  } catch (error) {
+    console.error('Error:', error);
   }
-});
+}
 
-app.use('/catalogue', catalogueController);
+async function cataloguesMenu() {
+  try {
+    const answers = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'catalogueChoice',
+        message: 'Catalogues Menu',
+        choices: ['All Catalogues', 'Create Catalogue', 'Back to Main Menu'],
+      },
+    ]);
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
+    switch (answers.catalogueChoice) {
+      case 'All Catalogues':
+        // Implement your logic for all catalogues
+        break;
+      case 'Create Catalogue':
+        // Implement your logic for creating a catalogue
+        break;
+      case 'Back to Main Menu':
+        mainMenu();
+        return;
+      default:
+        console.log('Invalid choice');
+    }
+    await cataloguesMenu();
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+async function tagsMenu() {
+  try {
+    const answers = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'tagChoice',
+        message: 'Tags Menu',
+        choices: [
+          'Generate for All Images',
+          'Generate Tags for Catalogue',
+          'Statistics',
+          'Logs',
+          'Back to Main Menu',
+        ],
+      },
+    ]);
+
+    switch (answers.tagChoice) {
+      case 'Generate for All Images':
+        // Implement your logic for generating tags for all images
+        break;
+      case 'Generate Tags for Catalogue':
+        // Implement your logic for generating tags for a catalogue
+        break;
+      case 'Statistics':
+        // Implement your logic for statistics
+        break;
+      case 'Logs':
+        // Implement your logic for logs
+        break;
+      case 'Back to Main Menu':
+        mainMenu();
+        return;
+      default:
+        console.log('Invalid choice');
+    }
+    await tagsMenu();
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+async function mainMenu() {
+  try {
+    const answers = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'menuChoice',
+        message: 'Main Menu',
+        choices: ['Images', 'Catalogues', 'Tags', 'Exit'],
+      },
+    ]);
+
+    switch (answers.menuChoice) {
+      case 'Images':
+        await imagesMenu();
+        break;
+      case 'Catalogues':
+        await cataloguesMenu();
+        break;
+      case 'Tags':
+        await tagsMenu();
+        break;
+      case 'Exit':
+        return;
+      default:
+        console.log('Invalid choice');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
+mainMenu();
