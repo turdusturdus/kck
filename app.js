@@ -26,28 +26,46 @@ const upload = multer({ storage: storage });
 // Define a route for file upload
 app.post('/upload', upload.array('image', 10), async (req, res) => {
   try {
+    let metadataArray = []; // Initialize an array to collect metadata
+
+    // Read existing metadata from the file if it exists
+    const metadataFilePath = path.join('storage', 'metadata.json');
+    if (fs.existsSync(metadataFilePath)) {
+      const existingMetadata = fs.readFileSync(metadataFilePath);
+      metadataArray = JSON.parse(existingMetadata);
+    }
+
     if (req.files) {
       await Promise.all(req.files.map(async file => {
         const thumbnailFilename = `thumbnail-${file.originalname}`;
         const thumbnailPath = path.join(thumbnailsDir, thumbnailFilename);
 
-        // Resize image and save as thumbnail
-        await sharp(file.path)
-          .resize(200, 200)
-          .toFile(thumbnailPath);
+        // Check if thumbnail already exists
+        if (!fs.existsSync(thumbnailPath)) {
+          await sharp(file.path)
+            .resize({
+              width: 200,
+              height: 200,
+              fit: sharp.fit.inside
+            })
+            .toFile(thumbnailPath);
+          
+          const metadata = {
+            originalName: file.originalname,
+            path: file.path,
+            thumbnailPath: thumbnailPath,
+            uploadDate: new Date().toISOString()
+          };
 
-        const metadata = {
-          originalName: file.originalname,
-          path: file.path,
-          thumbnailPath: thumbnailPath,
-          uploadDate: new Date().toISOString()
-        };
-
-        fs.writeFileSync(
-          path.join(originalsDir, file.originalname + '.json'),
-          JSON.stringify(metadata, null, 2)
-        );
+          metadataArray.push(metadata); // Add the new metadata to the array
+        }
       }));
+
+      // Write the updated array of metadata to the JSON file
+      fs.writeFileSync(
+        metadataFilePath,
+        JSON.stringify(metadataArray, null, 2)
+      );
     }
 
     res.send(`${req.files.length} files uploaded and thumbnails created successfully.`);
@@ -56,6 +74,7 @@ app.post('/upload', upload.array('image', 10), async (req, res) => {
     res.status(500).send('Error processing files');
   }
 });
+
 
 
 app.get('/download/:filename', (req, res) => {
