@@ -1,9 +1,10 @@
+import axios from 'axios';
+import FormData from 'form-data';
 import inquirer from 'inquirer';
 import fileSelector from 'inquirer-file-tree-selection-prompt';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
-import chalk from 'chalk';
 inquirer.registerPrompt('file-tree-selection', fileSelector);
 
 async function uploadImage() {
@@ -39,6 +40,29 @@ async function uploadImage() {
       const fileStat = fs.statSync(filePath);
       return fileStat.isFile();
     });
+
+    if (selectedFiles.length > 0) {
+      const formData = new FormData();
+      selectedFiles.forEach((file) => {
+        formData.append(
+          'image',
+          fs.createReadStream(file),
+          path.basename(file)
+        );
+      });
+
+      const response = await axios.post(
+        'http://localhost:3000/upload',
+        formData,
+        {
+          headers: formData.getHeaders(),
+        }
+      );
+
+      console.log('Upload successful:', response.data);
+    } else {
+      console.log('No files selected for upload.');
+    }
 
     console.log(`Files selected for upload: ${selectedFiles.join(', ')}`);
   } catch (error) {
