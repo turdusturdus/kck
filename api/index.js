@@ -115,6 +115,30 @@ app.post('/upload', upload.array('image', 10), async (req, res) => {
   }
 });
 
+app.get('/image', (req, res) => {
+  const metadataFilePath = path.join('storage', 'metadata.json');
+
+  if (fs.existsSync(metadataFilePath)) {
+    fs.readFile(metadataFilePath, (err, data) => {
+      if (err) {
+        console.error(err);
+        res.status(500).send('Error reading metadata file');
+        return;
+      }
+
+      try {
+        const metadata = JSON.parse(data);
+        res.json(metadata);
+      } catch (parseErr) {
+        console.error(parseErr);
+        res.status(500).send('Error parsing metadata file');
+      }
+    });
+  } else {
+    res.status(404).send('Metadata file not found');
+  }
+});
+
 app.get('/download/:filename', (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(originalsDir, filename);
