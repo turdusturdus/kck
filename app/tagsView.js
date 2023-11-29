@@ -10,6 +10,24 @@ import { mainMenu } from './index.js';
 
 inquirer.registerPrompt('file-tree-selection', fileSelector);
 
+async function tagLogs() {
+  try {
+    const response = await axios.get('http://localhost:3000/tags/logs');
+    const logs = response.data;
+
+    if (!logs) {
+      console.log('No log data available.');
+    } else {
+      console.log('Tagging Logs:\n', logs);
+    }
+  } catch (error) {
+    console.error(
+      'Error:',
+      error.response ? error.response.data : error.message
+    );
+  }
+}
+
 async function tagStatistics() {
   try {
     const response = await axios.get('http://localhost:3000/tags/statistics');
@@ -120,7 +138,7 @@ export async function tagsMenu() {
         await tagStatistics();
         break;
       case 'Logs':
-        // Implement your logic for logs
+        tagLogs();
         break;
       case 'Back to Main Menu':
         mainMenu();

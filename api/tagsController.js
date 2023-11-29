@@ -6,6 +6,7 @@ const router = express.Router();
 
 const cataloguesFilePath = path.join('storage', 'catalogues.json');
 const metadataFilePath = path.join('storage', 'metadata.json');
+const logFilePath = 'storage/tags.log';
 
 const readMetadata = () => {
   if (fs.existsSync(metadataFilePath)) {
@@ -24,6 +25,7 @@ router.post('/tags/tag-images', (req, res) => {
   const metadata = readMetadata();
 
   function addTagToImageMetadata(imageMetadata) {
+    const startTime = Date.now();
     const randomTag = Math.random() < 0.5 ? 'banana' : 'apple';
     if (!Array.isArray(imageMetadata.tags)) {
       imageMetadata.tags = [];
@@ -31,6 +33,11 @@ router.post('/tags/tag-images', (req, res) => {
     if (!imageMetadata.tags.includes(randomTag)) {
       imageMetadata.tags.push(randomTag);
     }
+    const endTime = Date.now();
+    const processingTime = endTime - startTime;
+
+    const logEntry = `Tagged ${imageMetadata.originalName} with '${randomTag}' in ${processingTime}ms\n`;
+    fs.appendFileSync(logFilePath, logEntry);
   }
 
   if (catalogueName) {
@@ -75,6 +82,15 @@ router.get('/tags/statistics', (req, res) => {
   });
 
   res.send(tagStatistics);
+});
+
+router.get('/tags/logs', (req, res) => {
+  fs.readFile(logFilePath, 'utf8', (err, data) => {
+    if (err) {
+      return res.status(500).send('Error reading log file');
+    }
+    res.type('text/plain').send(data);
+  });
 });
 
 export default router;
