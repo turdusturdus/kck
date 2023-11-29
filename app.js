@@ -7,6 +7,24 @@ import fs from 'fs';
 import os from 'os';
 inquirer.registerPrompt('file-tree-selection', fileSelector);
 
+async function allCatalogues() {
+  try {
+    const response = await axios.get('http://localhost:3000/catalogue');
+
+    const catalogues = response.data;
+    if (Object.keys(catalogues).length === 0) {
+      console.log('No catalogues available.');
+    } else {
+      console.log('Catalogues:', catalogues);
+    }
+  } catch (error) {
+    console.error(
+      'Error:',
+      error.response ? error.response.data : error.message
+    );
+  }
+}
+
 async function createCatalogue() {
   try {
     const { catalogueName } = await inquirer.prompt([
@@ -166,7 +184,7 @@ async function cataloguesMenu() {
 
     switch (answers.catalogueChoice) {
       case 'All Catalogues':
-        // Implement your logic for all catalogues
+        allCatalogues();
         break;
       case 'Create Catalogue':
         await createCatalogue();
