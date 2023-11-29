@@ -228,7 +228,7 @@ export async function imagesMenu() {
         type: 'list',
         name: 'imageChoice',
         message: 'Images Menu',
-        choices: ['All Images', 'Upload', 'Back to Main Menu'],
+        choices: ['Explore Images', 'Upload', 'Back to Main Menu'],
       },
     ]);
 
