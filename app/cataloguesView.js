@@ -8,6 +8,57 @@ import os from 'os';
 
 import { mainMenu } from './index.js';
 
+async function addImages(catalogueName) {
+  try {
+    // Fetch all images
+    const allImagesResponse = await axios.get('http://localhost:3000/image');
+    const allImages = allImagesResponse.data.map((image) => image.originalName);
+
+    // Fetch current catalogue
+    const catalogueResponse = await axios.get(
+      `http://localhost:3000/catalogue/${catalogueName}`
+    );
+    const catalogueImages = catalogueResponse.data.images;
+
+    // Filter out images already in the catalogue
+    const availableImages = allImages.filter(
+      (image) => !catalogueImages.includes(image)
+    );
+
+    if (availableImages.length === 0) {
+      console.log('No new images available to add.');
+      return;
+    }
+
+    const { selectedImages } = await inquirer.prompt([
+      {
+        type: 'search-checkbox',
+        message: 'Select images to add to the catalogue:',
+        name: 'selectedImages',
+        choices: availableImages,
+      },
+    ]);
+
+    if (selectedImages.length > 0) {
+      // Send selected images to the server to add them to the catalogue
+      const response = await axios.post(
+        `http://localhost:3000/catalogue/${encodeURIComponent(
+          catalogueName
+        )}/add-images`,
+        { imageNames: selectedImages }
+      );
+      console.log(response.data);
+    } else {
+      console.log('No images selected.');
+    }
+  } catch (error) {
+    console.error(
+      'Error:',
+      error.response ? error.response.data : error.message
+    );
+  }
+}
+
 async function renameCatalogue(oldCatalogueName) {
   try {
     const { newCatalogueName } = await inquirer.prompt([
@@ -111,7 +162,7 @@ async function exploreCatalogues() {
         console.table(catalogueDetails.images); // Adjust this according to your data structure
         break;
       case 'Add Images':
-        // Implement add images logic
+        await addImages(selectedCatalogue);
         break;
       case 'Back to Catalogues Menu':
         return;
@@ -169,13 +220,14 @@ async function allCatalogues() {
 
 async function createCatalogue() {
   try {
+    console.clear();
     const { catalogueName } = await inquirer.prompt([
       {
         type: 'input',
         name: 'catalogueName',
         message: 'Enter a name for the new catalogue (submit empty to cancel):',
         validate: (input) => {
-          return true;
+          return true; // You can add more validation if necessary
         },
       },
     ]);
@@ -185,11 +237,16 @@ async function createCatalogue() {
       return;
     }
 
+    // Create the new catalogue
     const response = await axios.post('http://localhost:3000/catalogue', {
       name: catalogueName,
     });
 
+    console.clear();
     console.log(response.data);
+
+    // After creating the catalogue, allow adding images to it
+    await addImages(catalogueName);
   } catch (error) {
     console.error(
       'Error:',

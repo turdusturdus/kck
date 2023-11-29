@@ -48,6 +48,22 @@ router.post('/catalogue', (req, res) => {
   res.send(`Catalogue '${name}' created successfully.`);
 });
 
+router.get('/catalogue/:catalogueName', (req, res) => {
+  try {
+    const { catalogueName } = req.params;
+    const catalogues = readCatalogues();
+
+    if (catalogues.hasOwnProperty(catalogueName)) {
+      res.json(catalogues[catalogueName]);
+    } else {
+      res.status(404).send('Catalogue not found');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 router.get('/catalogue', (req, res) => {
   try {
     const catalogues = readCatalogues();
@@ -78,6 +94,33 @@ router.post('/catalogue/:name/add-image', (req, res) => {
   saveCatalogues(catalogues);
 
   res.send(`Images added to catalogue '${name}'.`);
+});
+
+router.post('/catalogue/:name/add-images', (req, res) => {
+  const { name } = req.params;
+  let { imageNames } = req.body; // Expecting an array of image names
+
+  const catalogues = readCatalogues();
+
+  if (!catalogues[name]) {
+    return res.status(404).send('Catalogue not found');
+  }
+
+  // Ensure imageNames is an array, even if a single name is provided
+  if (!Array.isArray(imageNames)) {
+    imageNames = [imageNames];
+  }
+
+  // Filter out images that are already in the catalogue
+  const newImages = imageNames.filter(
+    (img) => !catalogues[name].images.includes(img)
+  );
+
+  // Add new images to the catalogue
+  catalogues[name].images.push(...newImages);
+  saveCatalogues(catalogues);
+
+  res.send(`Images added to catalogue '${name}': ${newImages.join(', ')}`);
 });
 
 router.post('/catalogue/:name/remove-image', (req, res) => {

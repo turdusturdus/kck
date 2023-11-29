@@ -21,6 +21,7 @@
     "form-data": "^4.0.0",
     "inquirer": "^9.2.12",
     "inquirer-file-tree-selection-prompt": "^2.0.5",
+    "inquirer-search-checkbox": "^1.0.0",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
     "os": "^0.1.2",

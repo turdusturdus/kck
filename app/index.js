@@ -2,6 +2,7 @@ import axios from 'axios';
 import FormData from 'form-data';
 import inquirer from 'inquirer';
 import fileSelector from 'inquirer-file-tree-selection-prompt';
+import inquirerSearchCheckbox from 'inquirer-search-checkbox';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -10,6 +11,7 @@ import { imagesMenu } from './imagesView.js';
 import { tagsMenu } from './tagsView.js';
 
 inquirer.registerPrompt('file-tree-selection', fileSelector);
+inquirer.registerPrompt('search-checkbox', inquirerSearchCheckbox);
 
 export async function mainMenu() {
   try {
