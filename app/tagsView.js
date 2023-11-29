@@ -5,6 +5,7 @@ import fileSelector from 'inquirer-file-tree-selection-prompt';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
+import Chartscii from 'chartscii';
 import { mainMenu } from './index.js';
 
 inquirer.registerPrompt('file-tree-selection', fileSelector);
@@ -18,9 +19,21 @@ async function tagStatistics() {
       console.log('No tag statistics available.');
     } else {
       console.log('Tag Statistics:');
-      Object.entries(tagStatistics).forEach(([tag, count]) => {
-        console.log(`${tag}: ${count}`);
+
+      const chartData = Object.entries(tagStatistics).map(([tag, count]) => {
+        return { label: `${tag} ${count}`, value: count };
       });
+
+      const chart = new Chartscii(chartData, {
+        width: 20,
+        color: 'blue',
+        char: '█',
+        sort: true,
+        reverse: true,
+        labels: true,
+      });
+
+      console.log(chart.create());
     }
   } catch (error) {
     console.error(
