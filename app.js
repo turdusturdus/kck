@@ -7,13 +7,35 @@ import fs from 'fs';
 import os from 'os';
 inquirer.registerPrompt('file-tree-selection', fileSelector);
 
+async function createCatalogue() {
+  try {
+    const { catalogueName } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'catalogueName',
+        message: 'Enter a name for the new catalogue:',
+        validate: (input) => input.trim() !== '',
+      },
+    ]);
+
+    const response = await axios.post('http://localhost:3000/catalogue', {
+      name: catalogueName,
+    });
+
+    console.log(response.data);
+  } catch (error) {
+    console.error(
+      'Error:',
+      error.response ? error.response.data : error.message
+    );
+  }
+}
+
 async function allImages() {
   try {
-    // Fetch all image metadata from the server
     const response = await axios.get('http://localhost:3000/image');
     const allMetadata = response.data;
 
-    // List all images for the user to select one
     const imageChoices = allMetadata.map((meta) => meta.originalName);
     const answer = await inquirer.prompt([
       {
@@ -24,7 +46,6 @@ async function allImages() {
       },
     ]);
 
-    // Find the metadata of the selected image
     const selectedMetadata = allMetadata.find(
       (meta) => meta.originalName === answer.selectedImage
     );
@@ -148,7 +169,7 @@ async function cataloguesMenu() {
         // Implement your logic for all catalogues
         break;
       case 'Create Catalogue':
-        // Implement your logic for creating a catalogue
+        await createCatalogue();
         break;
       case 'Back to Main Menu':
         mainMenu();
