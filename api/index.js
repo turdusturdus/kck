@@ -30,10 +30,11 @@ const upload = multer({ storage: storage });
 app.use(express.json());
 app.use(morgan('common'));
 
-app.delete('/delete/:filename', (req, res) => {
+app.delete('/image/:filename', (req, res) => {
   const filename = req.params.filename;
   const filePath = path.join(originalsDir, filename);
   const thumbnailPath = path.join(thumbnailsDir, `thumbnail-${filename}`);
+  const metadataFilePath = path.join('storage', 'metadata.json');
 
   if (fs.existsSync(filePath)) {
     fs.unlink(filePath, (err) => {
@@ -42,7 +43,6 @@ app.delete('/delete/:filename', (req, res) => {
         return res.status(500).send('Error deleting the original file');
       }
 
-      // Optionally delete the thumbnail
       if (fs.existsSync(thumbnailPath)) {
         fs.unlink(thumbnailPath, (err) => {
           if (err) {
@@ -52,8 +52,16 @@ app.delete('/delete/:filename', (req, res) => {
         });
       }
 
-      // Optionally update metadata file
-      // ... [Your code to update/delete the metadata from metadata.json]
+      if (fs.existsSync(metadataFilePath)) {
+        const metadataArray = JSON.parse(fs.readFileSync(metadataFilePath));
+        const updatedMetadata = metadataArray.filter(
+          (meta) => meta.originalName !== filename
+        );
+        fs.writeFileSync(
+          metadataFilePath,
+          JSON.stringify(updatedMetadata, null, 2)
+        );
+      }
 
       res.send('File deleted successfully');
     });
@@ -62,7 +70,7 @@ app.delete('/delete/:filename', (req, res) => {
   }
 });
 
-app.post('/upload', upload.array('image', 10), async (req, res) => {
+app.post('/image', upload.array('image', 10), async (req, res) => {
   console.log(req.files.length);
   try {
     let metadataArray = [];

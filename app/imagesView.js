@@ -7,6 +7,30 @@ import os from 'os';
 
 import { mainMenu } from './index.js';
 
+async function deleteImage(filename) {
+  try {
+    const response = await axios.delete(
+      `http://localhost:3000/image/${encodeURIComponent(filename)}`
+    );
+    console.clear();
+
+    console.log(response.data);
+
+    await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'continue',
+        message: 'Press Enter to continue...',
+      },
+    ]);
+  } catch (error) {
+    console.error(
+      'Error:',
+      error.response ? error.response.data : error.message
+    );
+  }
+}
+
 async function showMetadata(selectedMetadata) {
   console.log('Metadata for the selected image:');
   const { tags, ...restOfMetadata } = selectedMetadata;
@@ -81,7 +105,7 @@ async function allImages() {
         await showMetadata(selectedMetadata);
         break;
       case 'Delete':
-        // Implement delete logic
+        await deleteImage(selectedMetadata.originalName);
         break;
       case 'Back to Image Selection':
         await allImages();
@@ -137,7 +161,7 @@ async function uploadImage() {
       });
 
       const response = await axios.post(
-        'http://localhost:3000/upload',
+        'http://localhost:3000/image',
         formData,
         {
           headers: formData.getHeaders(),
@@ -148,6 +172,14 @@ async function uploadImage() {
     } else {
       console.log('No files selected for upload.');
     }
+
+    await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'continue',
+        message: 'Press Enter to continue...',
+      },
+    ]);
   } catch (error) {
     console.error('Error:', error);
   }
