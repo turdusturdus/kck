@@ -19,13 +19,6 @@ async function tagLogs() {
       console.log('No log data available.');
     } else {
       console.log('Tagging Logs:\n', logs);
-      await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'continue',
-          message: 'Press Enter to continue...',
-        },
-      ]);
     }
   } catch (error) {
     console.error(
@@ -154,6 +147,13 @@ export async function tagsMenu() {
       default:
         console.log('Invalid choice');
     }
+    await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'continue',
+        message: 'Press Enter to continue...',
+      },
+    ]);
     await tagsMenu();
   } catch (error) {
     console.error('Error:', error);
