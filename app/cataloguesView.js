@@ -53,34 +53,70 @@ async function deleteImagesFromCatalogue(catalogueName) {
 
 async function addImages(catalogueName) {
   try {
-    // Fetch all images
-    const allImagesResponse = await axios.get('http://localhost:3000/image');
-    const allImages = allImagesResponse.data.map((image) => image.originalName);
+    const { addByTags } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'addByTags',
+        message: 'Do you want to add images by tags?',
+        default: false,
+      },
+    ]);
 
-    // Fetch current catalogue
+    console.clear();
+
+    const allImagesResponse = await axios.get('http://localhost:3000/image');
+    const allImages = allImagesResponse.data;
     const catalogueResponse = await axios.get(
       `http://localhost:3000/catalogue/${catalogueName}`
     );
     const catalogueImages = catalogueResponse.data.images;
 
-    // Filter out images already in the catalogue
-    const availableImages = allImages.filter(
-      (image) => !catalogueImages.includes(image)
-    );
+    let selectedImages = [];
 
-    if (availableImages.length === 0) {
-      console.log('No new images available to add.');
-      return;
+    if (addByTags) {
+      // Fetch and choose tags
+      const tags = Array.from(
+        new Set(allImages.flatMap((image) => image.tags || []))
+      );
+      const { selectedTags } = await inquirer.prompt([
+        {
+          type: 'checkbox',
+          message: 'Select tags:',
+          name: 'selectedTags',
+          choices: tags,
+        },
+      ]);
+
+      // Filter images by selected tags
+      selectedImages = allImages
+        .filter(
+          (image) =>
+            image.tags &&
+            selectedTags.some((tag) => image.tags.includes(tag)) &&
+            !catalogueImages.includes(image.originalName)
+        )
+        .map((image) => image.originalName);
+    } else {
+      // Filter out images already in the catalogue
+      const availableImages = allImages
+        .filter((image) => !catalogueImages.includes(image.originalName))
+        .map((image) => image.originalName);
+
+      if (availableImages.length === 0) {
+        console.log('No new images available to add.');
+        return;
+      }
+
+      const answers = await inquirer.prompt([
+        {
+          type: 'search-checkbox',
+          message: 'Select images to add to the catalogue:',
+          name: 'selectedImages',
+          choices: availableImages,
+        },
+      ]);
+      selectedImages = answers.selectedImages;
     }
-
-    const { selectedImages } = await inquirer.prompt([
-      {
-        type: 'search-checkbox',
-        message: 'Select images to add to the catalogue:',
-        name: 'selectedImages',
-        choices: availableImages,
-      },
-    ]);
 
     if (selectedImages.length > 0) {
       // Send selected images to the server to add them to the catalogue
@@ -206,6 +242,9 @@ async function exploreCatalogues() {
         console.table(catalogueDetails.images); // Adjust this according to your data structure
         break;
       case 'Add Images':
+        await addImages(selectedCatalogue);
+        break;
+      case 'Add Images By Tags':
         await addImages(selectedCatalogue);
         break;
       case 'Remove Images':

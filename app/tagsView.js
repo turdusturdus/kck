@@ -127,6 +127,7 @@ export async function tagsMenu() {
         ],
       },
     ]);
+    console.clear();
 
     switch (answers.tagChoice) {
       case 'Generate for All Images':
