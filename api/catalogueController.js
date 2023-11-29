@@ -48,6 +48,16 @@ router.post('/', (req, res) => {
   res.send(`Catalogue '${name}' created successfully.`);
 });
 
+router.get('/', (req, res) => {
+  try {
+    const catalogues = readCatalogues();
+    res.json(catalogues);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 router.post('/:name/add-image', (req, res) => {
   const { name } = req.params;
   let { imageName } = req.body;
