@@ -1,7 +1,6 @@
 import axios from 'axios';
 import FormData from 'form-data';
 import inquirer from 'inquirer';
-import fileSelector from 'inquirer-file-tree-selection-prompt';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -13,22 +12,40 @@ async function allImages() {
     const response = await axios.get('http://localhost:3000/image');
     const allMetadata = response.data;
 
-    const imageChoices = allMetadata.map((meta) => meta.originalName);
+    const imageChoices = ['Back to Menu'].concat(
+      allMetadata.map((meta) => meta.originalName)
+    );
+
     const answer = await inquirer.prompt([
       {
         type: 'list',
         name: 'selectedImage',
-        message: 'Select an image to view its metadata:',
+        message:
+          'Select an image to view its metadata, or choose "Back to Menu" to return:',
         choices: imageChoices,
       },
     ]);
+
+    if (answer.selectedImage === 'Back to Menu') {
+      return;
+    }
 
     const selectedMetadata = allMetadata.find(
       (meta) => meta.originalName === answer.selectedImage
     );
 
     if (selectedMetadata) {
-      console.log('Metadata for the selected image:', selectedMetadata);
+      console.log('Metadata for the selected image:');
+      const { tags, ...restOfMetadata } = selectedMetadata;
+      console.table(restOfMetadata);
+      console.table({ tags });
+      await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'continue',
+          message: 'Press Enter to continue...',
+        },
+      ]);
     } else {
       console.log('No metadata found for the selected image.');
     }
@@ -89,12 +106,10 @@ async function uploadImage() {
         }
       );
 
-      console.log('Upload successful:', response.data);
+      console.log('Upload successful');
     } else {
       console.log('No files selected for upload.');
     }
-
-    console.log(`Files selected for upload: ${selectedFiles.join(', ')}`);
   } catch (error) {
     console.error('Error:', error);
   }
@@ -102,6 +117,7 @@ async function uploadImage() {
 
 export async function imagesMenu() {
   try {
+    console.clear();
     const answers = await inquirer.prompt([
       {
         type: 'list',

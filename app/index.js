@@ -13,6 +13,7 @@ inquirer.registerPrompt('file-tree-selection', fileSelector);
 
 export async function mainMenu() {
   try {
+    console.clear();
     const answers = await inquirer.prompt([
       {
         type: 'list',

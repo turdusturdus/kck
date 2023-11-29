@@ -19,6 +19,13 @@ async function tagLogs() {
       console.log('No log data available.');
     } else {
       console.log('Tagging Logs:\n', logs);
+      await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'continue',
+          message: 'Press Enter to continue...',
+        },
+      ]);
     }
   } catch (error) {
     console.error(
@@ -112,6 +119,7 @@ async function generateTagsForAllImages() {
 
 export async function tagsMenu() {
   try {
+    console.clear();
     const answers = await inquirer.prompt([
       {
         type: 'list',
@@ -138,7 +146,7 @@ export async function tagsMenu() {
         await tagStatistics();
         break;
       case 'Logs':
-        tagLogs();
+        await tagLogs();
         break;
       case 'Back to Main Menu':
         mainMenu();

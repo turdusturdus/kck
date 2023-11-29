@@ -16,7 +16,24 @@ async function allCatalogues() {
     if (Object.keys(catalogues).length === 0) {
       console.log('No catalogues available.');
     } else {
-      console.log('Catalogues:', catalogues);
+      console.log('Catalogues:');
+      console.table(
+        Object.keys(catalogues).map((key) => {
+          const value = catalogues[key];
+          return {
+            catalogue: key,
+            creationDate: value.creationDate,
+            'images count': value.images.length,
+          };
+        })
+      );
+      await inquirer.prompt([
+        {
+          type: 'input',
+          name: 'continue',
+          message: 'Press Enter to continue...',
+        },
+      ]);
     }
   } catch (error) {
     console.error(
@@ -32,10 +49,17 @@ async function createCatalogue() {
       {
         type: 'input',
         name: 'catalogueName',
-        message: 'Enter a name for the new catalogue:',
-        validate: (input) => input.trim() !== '',
+        message: 'Enter a name for the new catalogue (submit empty to cancel):',
+        validate: (input) => {
+          return true;
+        },
       },
     ]);
+
+    if (!catalogueName.trim()) {
+      console.log('Catalogue creation cancelled.');
+      return;
+    }
 
     const response = await axios.post('http://localhost:3000/catalogue', {
       name: catalogueName,
@@ -52,6 +76,7 @@ async function createCatalogue() {
 
 export async function cataloguesMenu() {
   try {
+    console.clear();
     const answers = await inquirer.prompt([
       {
         type: 'list',
@@ -63,7 +88,7 @@ export async function cataloguesMenu() {
 
     switch (answers.catalogueChoice) {
       case 'All Catalogues':
-        allCatalogues();
+        await allCatalogues();
         break;
       case 'Create Catalogue':
         await createCatalogue();
