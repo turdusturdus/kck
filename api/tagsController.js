@@ -23,8 +23,17 @@ router.post('/tags/tag-images', (req, res) => {
   const catalogues = JSON.parse(fs.readFileSync(cataloguesFilePath));
   const metadata = readMetadata();
 
+  function addTagToImageMetadata(imageMetadata) {
+    const randomTag = Math.random() < 0.5 ? 'banana' : 'apple';
+    if (!Array.isArray(imageMetadata.tags)) {
+      imageMetadata.tags = [];
+    }
+    if (!imageMetadata.tags.includes(randomTag)) {
+      imageMetadata.tags.push(randomTag);
+    }
+  }
+
   if (catalogueName) {
-    // If a catalogue is specified
     if (!catalogues[catalogueName]) {
       return res.status(404).send('Catalogue not found');
     }
@@ -34,16 +43,11 @@ router.post('/tags/tag-images', (req, res) => {
         (meta) => meta.originalName === imageName
       );
       if (imageMetadata) {
-        const randomTag = Math.random() < 0.5 ? 'banana' : 'apple';
-        imageMetadata.tag = randomTag;
+        addTagToImageMetadata(imageMetadata);
       }
     });
   } else {
-    // If no catalogue is specified, tag all images
-    metadata.forEach((imageMetadata) => {
-      const randomTag = Math.random() < 0.5 ? 'banana' : 'apple';
-      imageMetadata.tag = randomTag;
-    });
+    metadata.forEach(addTagToImageMetadata);
   }
 
   saveMetadata(metadata);
