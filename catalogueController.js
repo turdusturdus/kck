@@ -1,6 +1,7 @@
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
+import express from 'express';
+import fs from 'fs';
+import path from 'path';
+
 const router = express.Router();
 
 const originalsDir = 'storage/originals';
@@ -132,4 +133,4 @@ router.put('/:name/rename', (req, res) => {
   res.send(`Catalogue '${name}' renamed to '${newName}' successfully.`);
 });
 
-module.exports = router;
+export default router;

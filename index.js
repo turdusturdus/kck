@@ -1,11 +1,12 @@
-const express = require('express');
-const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
+import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
+import sharp from 'sharp';
+import catalogueController from './catalogueController.js';
+import taggerController from './taggerController.js';
+
 const app = express();
-const sharp = require('sharp');
-const catalogueController = require('./catalogueController'); // Import the catalogue controller
-const taggerController = require('./taggerController');
 
 const port = 3000;
 

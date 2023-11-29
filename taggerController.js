@@ -1,6 +1,7 @@
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
+import express from 'express';
+import fs from 'fs';
+import path from 'path';
+
 const router = express.Router();
 
 const cataloguesFilePath = path.join('storage', 'catalogues.json');
@@ -40,4 +41,4 @@ router.post('/:catalogueName/tag-images', (req, res) => {
   res.send(`Images in catalogue '${catalogueName}' tagged successfully.`);
 });
 
-module.exports = router;
+export default router;
