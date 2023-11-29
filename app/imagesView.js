@@ -7,8 +7,24 @@ import os from 'os';
 
 import { mainMenu } from './index.js';
 
+async function showMetadata(selectedMetadata) {
+  console.log('Metadata for the selected image:');
+  const { tags, ...restOfMetadata } = selectedMetadata;
+  console.table(restOfMetadata);
+  console.table({ tags });
+
+  await inquirer.prompt([
+    {
+      type: 'input',
+      name: 'continue',
+      message: 'Press Enter to continue...',
+    },
+  ]);
+}
+
 async function allImages() {
   try {
+    console.clear();
     const response = await axios.get('http://localhost:3000/image');
     const allMetadata = response.data;
 
@@ -34,20 +50,42 @@ async function allImages() {
       (meta) => meta.originalName === answer.selectedImage
     );
 
-    if (selectedMetadata) {
-      console.log('Metadata for the selected image:');
-      const { tags, ...restOfMetadata } = selectedMetadata;
-      console.table(restOfMetadata);
-      console.table({ tags });
-      await inquirer.prompt([
-        {
-          type: 'input',
-          name: 'continue',
-          message: 'Press Enter to continue...',
-        },
-      ]);
-    } else {
+    if (!selectedMetadata) {
       console.log('No metadata found for the selected image.');
+      return;
+    }
+
+    console.clear();
+
+    const { action } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'action',
+        message: 'Choose an action:',
+        choices: [
+          'Rename',
+          'Show Metadata',
+          'Delete',
+          'Back to Image Selection',
+        ],
+      },
+    ]);
+
+    console.clear();
+
+    switch (action) {
+      case 'Rename':
+        // Implement rename logic
+        break;
+      case 'Show Metadata':
+        await showMetadata(selectedMetadata);
+        break;
+      case 'Delete':
+        // Implement delete logic
+        break;
+      case 'Back to Image Selection':
+        await allImages();
+        break;
     }
   } catch (error) {
     console.error('Error:', error);
