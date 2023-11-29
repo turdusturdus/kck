@@ -7,14 +7,14 @@ const router = express.Router();
 const originalsDir = 'storage/originals';
 const cataloguesFilePath = path.join('storage', 'catalogues.json');
 
-const readCatalogues = () => {
+export const readCatalogues = () => {
   if (fs.existsSync(cataloguesFilePath)) {
     return JSON.parse(fs.readFileSync(cataloguesFilePath));
   }
   return {};
 };
 
-const saveCatalogues = (catalogues) => {
+export const saveCatalogues = (catalogues) => {
   fs.writeFileSync(cataloguesFilePath, JSON.stringify(catalogues, null, 2));
 };
 

@@ -3,7 +3,10 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import sharp from 'sharp';
-import catalogueController from './catalogueController.js';
+import catalogueController, {
+  readCatalogues,
+  saveCatalogues,
+} from './catalogueController.js';
 import tagsController from './tagsController.js';
 import morgan from 'morgan';
 
@@ -140,6 +143,7 @@ app.post('/image/rename', async (req, res) => {
         fs.renameSync(originalThumbnailPath, newThumbnailPath);
       }
 
+      // Update metadata
       if (fs.existsSync(metadataFilePath)) {
         const metadataArray = JSON.parse(fs.readFileSync(metadataFilePath));
         const metadataIndex = metadataArray.findIndex(
@@ -157,6 +161,16 @@ app.post('/image/rename', async (req, res) => {
         }
       }
 
+      // Update catalogues
+      const catalogues = readCatalogues();
+      Object.values(catalogues).forEach((catalogue) => {
+        const imageIndex = catalogue.images.indexOf(originalName);
+        if (imageIndex !== -1) {
+          catalogue.images[imageIndex] = newName;
+        }
+      });
+      saveCatalogues(catalogues);
+
       res.send('Image renamed successfully');
     } else {
       res.status(404).send('Original file not found');
@@ -168,8 +182,6 @@ app.post('/image/rename', async (req, res) => {
 });
 
 app.get('/image', (req, res) => {
-  const metadataFilePath = path.join('storage', 'metadata.json');
-
   if (fs.existsSync(metadataFilePath)) {
     fs.readFile(metadataFilePath, (err, data) => {
       if (err) {
