@@ -5,6 +5,7 @@ import fs from 'fs';
 import sharp from 'sharp';
 import catalogueController from './catalogueController.js';
 import taggerController from './taggerController.js';
+import morgan from 'morgan';
 
 const app = express();
 
@@ -27,6 +28,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 app.use(express.json());
+app.use(morgan('common'));
 
 app.delete('/delete/:filename', (req, res) => {
   const filename = req.params.filename;
@@ -61,6 +63,7 @@ app.delete('/delete/:filename', (req, res) => {
 });
 
 app.post('/upload', upload.array('image', 10), async (req, res) => {
+  console.log(req.files.length);
   try {
     let metadataArray = [];
 
