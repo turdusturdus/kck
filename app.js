@@ -7,6 +7,38 @@ import fs from 'fs';
 import os from 'os';
 inquirer.registerPrompt('file-tree-selection', fileSelector);
 
+async function allImages() {
+  try {
+    // Fetch all image metadata from the server
+    const response = await axios.get('http://localhost:3000/image');
+    const allMetadata = response.data;
+
+    // List all images for the user to select one
+    const imageChoices = allMetadata.map((meta) => meta.originalName);
+    const answer = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'selectedImage',
+        message: 'Select an image to view its metadata:',
+        choices: imageChoices,
+      },
+    ]);
+
+    // Find the metadata of the selected image
+    const selectedMetadata = allMetadata.find(
+      (meta) => meta.originalName === answer.selectedImage
+    );
+
+    if (selectedMetadata) {
+      console.log('Metadata for the selected image:', selectedMetadata);
+    } else {
+      console.log('No metadata found for the selected image.');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
+}
+
 async function uploadImage() {
   try {
     const homeDirectory = os.homedir();
@@ -83,7 +115,7 @@ async function imagesMenu() {
 
     switch (answers.imageChoice) {
       case 'All Images':
-        // Implement your logic for showing all images
+        await allImages();
         break;
       case 'Upload':
         await uploadImage();
