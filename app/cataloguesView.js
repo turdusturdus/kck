@@ -8,6 +8,35 @@ import os from 'os';
 
 import { mainMenu } from './index.js';
 
+async function renameCatalogue(oldCatalogueName) {
+  try {
+    const { newCatalogueName } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'newCatalogueName',
+        message: 'Enter the new name for the catalogue:',
+        validate: (input) => input.trim() !== '' && input !== oldCatalogueName,
+      },
+    ]);
+
+    const response = await axios.put(
+      `http://localhost:3000/catalogue/${encodeURIComponent(
+        oldCatalogueName
+      )}/rename`,
+      {
+        newName: newCatalogueName,
+      }
+    );
+
+    console.log(response.data);
+  } catch (error) {
+    console.error(
+      'Error:',
+      error.response ? error.response.data : error.message
+    );
+  }
+}
+
 async function deleteCatalogue(catalogueName) {
   try {
     const response = await axios.delete(
@@ -71,7 +100,7 @@ async function exploreCatalogues() {
 
     switch (action) {
       case 'Rename Catalogue':
-        // Implement rename logic
+        await renameCatalogue(selectedCatalogue);
         break;
       case 'Delete Catalogue':
         await deleteCatalogue(selectedCatalogue);
