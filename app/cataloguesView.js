@@ -8,6 +8,49 @@ import os from 'os';
 
 import { mainMenu } from './index.js';
 
+async function deleteImagesFromCatalogue(catalogueName) {
+  try {
+    // Fetch current catalogue
+    const catalogueResponse = await axios.get(
+      `http://localhost:3000/catalogue/${catalogueName}`
+    );
+    const catalogueImages = catalogueResponse.data.images;
+
+    if (catalogueImages.length === 0) {
+      console.log('No images in the catalogue to remove.');
+      return;
+    }
+
+    const { selectedImages } = await inquirer.prompt([
+      {
+        type: 'search-checkbox',
+        message: 'Select images to remove from the catalogue:',
+        name: 'selectedImages',
+        choices: catalogueImages,
+      },
+    ]);
+    console.clear();
+
+    if (selectedImages.length > 0) {
+      // Send selected images to the server to remove them from the catalogue
+      const response = await axios.post(
+        `http://localhost:3000/catalogue/${encodeURIComponent(
+          catalogueName
+        )}/remove-image`,
+        { imageName: selectedImages }
+      );
+      console.log(response.data);
+    } else {
+      console.log('No images selected for removal.');
+    }
+  } catch (error) {
+    console.error(
+      'Error:',
+      error.response ? error.response.data : error.message
+    );
+  }
+}
+
 async function addImages(catalogueName) {
   try {
     // Fetch all images
@@ -134,6 +177,7 @@ async function exploreCatalogues() {
       'Delete Catalogue',
       'View Details',
       'Add Images',
+      'Remove Images',
       'Back to Catalogues Menu',
     ];
     console.clear();
@@ -163,6 +207,9 @@ async function exploreCatalogues() {
         break;
       case 'Add Images':
         await addImages(selectedCatalogue);
+        break;
+      case 'Remove Images':
+        await deleteImagesFromCatalogue(selectedCatalogue);
         break;
       case 'Back to Catalogues Menu':
         return;

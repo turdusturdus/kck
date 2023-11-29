@@ -125,7 +125,7 @@ router.post('/catalogue/:name/add-images', (req, res) => {
 
 router.post('/catalogue/:name/remove-image', (req, res) => {
   const { name } = req.params;
-  const { imageName } = req.body;
+  let { imageName } = req.body;
 
   const catalogues = readCatalogues();
 
@@ -133,15 +133,32 @@ router.post('/catalogue/:name/remove-image', (req, res) => {
     return res.status(404).send('Catalogue not found');
   }
 
-  const index = catalogues[name].images.indexOf(imageName);
-  if (index === -1) {
-    return res.status(400).send('Image not found in catalogue');
+  // Ensure imageName is an array
+  if (!Array.isArray(imageName)) {
+    imageName = [imageName];
   }
 
-  catalogues[name].images.splice(index, 1);
+  let imagesNotFound = [];
+  imageName.forEach((img) => {
+    const index = catalogues[name].images.indexOf(img);
+    if (index !== -1) {
+      catalogues[name].images.splice(index, 1);
+    } else {
+      imagesNotFound.push(img);
+    }
+  });
+
   saveCatalogues(catalogues);
 
-  res.send(`Image '${imageName}' removed from catalogue '${name}'.`);
+  if (imagesNotFound.length > 0) {
+    res
+      .status(400)
+      .send(`Some images not found in catalogue: ${imagesNotFound.join(', ')}`);
+  } else {
+    res.send(
+      `Images removed from catalogue '${name}': ${imageName.join(', ')}`
+    );
+  }
 });
 
 router.delete('/catalogue/:name', (req, res) => {
