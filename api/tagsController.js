@@ -58,4 +58,23 @@ router.post('/tags/tag-images', (req, res) => {
   );
 });
 
+router.get('/tags/statistics', (req, res) => {
+  const metadata = readMetadata();
+  const tagStatistics = {};
+
+  metadata.forEach((image) => {
+    if (Array.isArray(image.tags)) {
+      image.tags.forEach((tag) => {
+        if (tagStatistics[tag]) {
+          tagStatistics[tag] += 1;
+        } else {
+          tagStatistics[tag] = 1;
+        }
+      });
+    }
+  });
+
+  res.send(tagStatistics);
+});
+
 export default router;

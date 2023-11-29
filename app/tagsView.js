@@ -9,6 +9,27 @@ import { mainMenu } from './index.js';
 
 inquirer.registerPrompt('file-tree-selection', fileSelector);
 
+async function tagStatistics() {
+  try {
+    const response = await axios.get('http://localhost:3000/tags/statistics');
+    const tagStatistics = response.data;
+
+    if (Object.keys(tagStatistics).length === 0) {
+      console.log('No tag statistics available.');
+    } else {
+      console.log('Tag Statistics:');
+      Object.entries(tagStatistics).forEach(([tag, count]) => {
+        console.log(`${tag}: ${count}`);
+      });
+    }
+  } catch (error) {
+    console.error(
+      'Error:',
+      error.response ? error.response.data : error.message
+    );
+  }
+}
+
 async function generateTagsForCatalogue() {
   try {
     // Fetching all catalogues
@@ -83,7 +104,7 @@ export async function tagsMenu() {
         await generateTagsForCatalogue();
         break;
       case 'Statistics':
-        // Implement your logic for statistics
+        await tagStatistics();
         break;
       case 'Logs':
         // Implement your logic for logs
