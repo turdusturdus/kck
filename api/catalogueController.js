@@ -18,7 +18,7 @@ const saveCatalogues = (catalogues) => {
   fs.writeFileSync(cataloguesFilePath, JSON.stringify(catalogues, null, 2));
 };
 
-router.post('/', (req, res) => {
+router.post('/catalogue', (req, res) => {
   const { name, images } = req.body;
 
   if (!name) {
@@ -48,7 +48,7 @@ router.post('/', (req, res) => {
   res.send(`Catalogue '${name}' created successfully.`);
 });
 
-router.get('/', (req, res) => {
+router.get('/catalogue', (req, res) => {
   try {
     const catalogues = readCatalogues();
     res.json(catalogues);
@@ -58,7 +58,7 @@ router.get('/', (req, res) => {
   }
 });
 
-router.post('/:name/add-image', (req, res) => {
+router.post('/catalogue/:name/add-image', (req, res) => {
   const { name } = req.params;
   let { imageName } = req.body;
 
@@ -80,7 +80,7 @@ router.post('/:name/add-image', (req, res) => {
   res.send(`Images added to catalogue '${name}'.`);
 });
 
-router.post('/:name/remove-image', (req, res) => {
+router.post('/catalogue/:name/remove-image', (req, res) => {
   const { name } = req.params;
   const { imageName } = req.body;
 
@@ -101,7 +101,7 @@ router.post('/:name/remove-image', (req, res) => {
   res.send(`Image '${imageName}' removed from catalogue '${name}'.`);
 });
 
-router.delete('/:name', (req, res) => {
+router.delete('/catalogue/:name', (req, res) => {
   const { name } = req.params;
 
   const catalogues = readCatalogues();
@@ -117,7 +117,7 @@ router.delete('/:name', (req, res) => {
   res.send(`Catalogue '${name}' removed successfully.`);
 });
 
-router.put('/:name/rename', (req, res) => {
+router.put('/catalogue/:name/rename', (req, res) => {
   const { name } = req.params;
   const { newName } = req.body;
 

@@ -8,6 +8,101 @@ import os from 'os';
 
 import { mainMenu } from './index.js';
 
+async function deleteCatalogue(catalogueName) {
+  try {
+    const response = await axios.delete(
+      `http://localhost:3000/catalogue/${encodeURIComponent(catalogueName)}`
+    );
+    console.log(response.data);
+  } catch (error) {
+    console.error(
+      'Error:',
+      error.response ? error.response.data : error.message
+    );
+  }
+}
+
+async function exploreCatalogues() {
+  try {
+    console.clear();
+    const response = await axios.get('http://localhost:3000/catalogue');
+    const catalogues = response.data;
+
+    if (Object.keys(catalogues).length === 0) {
+      console.log('No catalogues available.');
+      return;
+    }
+
+    const catalogueChoices = ['Back to Catalogues Menu'].concat(
+      Object.keys(catalogues)
+    );
+    const { selectedCatalogue } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'selectedCatalogue',
+        message: 'Select a catalogue to explore:',
+        choices: catalogueChoices,
+      },
+    ]);
+
+    if (selectedCatalogue === 'Back to Catalogues Menu') {
+      return;
+    }
+
+    const actionChoices = [
+      'Rename Catalogue',
+      'Delete Catalogue',
+      'View Details',
+      'Add Images',
+      'Back to Catalogues Menu',
+    ];
+    console.clear();
+
+    const { action } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'action',
+        message: 'Choose an action:',
+        choices: actionChoices,
+      },
+    ]);
+
+    console.clear();
+
+    switch (action) {
+      case 'Rename Catalogue':
+        // Implement rename logic
+        break;
+      case 'Delete Catalogue':
+        await deleteCatalogue(selectedCatalogue);
+        break;
+      case 'View Details':
+        const catalogueDetails = catalogues[selectedCatalogue];
+        console.log(`Details of '${selectedCatalogue}' catalogue:`);
+        console.table(catalogueDetails.images); // Adjust this according to your data structure
+        break;
+      case 'Add Images':
+        // Implement add images logic
+        break;
+      case 'Back to Catalogues Menu':
+        return;
+    }
+
+    await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'continue',
+        message: 'Press Enter to continue...',
+      },
+    ]);
+  } catch (error) {
+    console.error(
+      'Error:',
+      error.response ? error.response.data : error.message
+    );
+  }
+}
+
 async function allCatalogues() {
   try {
     const response = await axios.get('http://localhost:3000/catalogue');
@@ -82,7 +177,12 @@ export async function cataloguesMenu() {
         type: 'list',
         name: 'catalogueChoice',
         message: 'Catalogues Menu',
-        choices: ['All Catalogues', 'Create Catalogue', 'Back to Main Menu'],
+        choices: [
+          'All Catalogues',
+          'Create Catalogue',
+          'Explore Catalogues',
+          'Back to Main Menu',
+        ],
       },
     ]);
 
@@ -92,6 +192,9 @@ export async function cataloguesMenu() {
         break;
       case 'Create Catalogue':
         await createCatalogue();
+        break;
+      case 'Explore Catalogues':
+        await exploreCatalogues();
         break;
       case 'Back to Main Menu':
         mainMenu();

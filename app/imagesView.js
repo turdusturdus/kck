@@ -233,7 +233,7 @@ export async function imagesMenu() {
     ]);
 
     switch (answers.imageChoice) {
-      case 'All Images':
+      case 'Explore Images':
         await allImages();
         break;
       case 'Upload':

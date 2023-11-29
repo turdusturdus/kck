@@ -202,7 +202,7 @@ app.get('/download/:filename', (req, res) => {
   }
 });
 
-app.use('/catalogue', catalogueController);
+app.use('/', catalogueController);
 app.use('/', tagsController);
 
 app.listen(port, () => {
