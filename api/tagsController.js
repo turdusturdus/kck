@@ -18,7 +18,7 @@ const saveMetadata = (metadata) => {
   fs.writeFileSync(metadataFilePath, JSON.stringify(metadata, null, 2));
 };
 
-router.post('/:catalogueName/tag-images', (req, res) => {
+router.post('/tags/:catalogueName/tag-images', (req, res) => {
   const { catalogueName } = req.params;
   const catalogues = JSON.parse(fs.readFileSync(cataloguesFilePath));
   const metadata = readMetadata();
@@ -39,6 +39,22 @@ router.post('/:catalogueName/tag-images', (req, res) => {
 
   saveMetadata(metadata);
   res.send(`Images in catalogue '${catalogueName}' tagged successfully.`);
+});
+
+router.post('/tags/tag-images', (req, res) => {
+  const metadata = readMetadata();
+
+  if (!metadata || metadata.length === 0) {
+    return res.status(404).send('No images found');
+  }
+
+  metadata.forEach((imageMetadata) => {
+    const randomTag = Math.random() < 0.5 ? 'banana' : 'apple';
+    imageMetadata.tag = randomTag;
+  });
+
+  saveMetadata(metadata);
+  res.send('All images tagged successfully.');
 });
 
 export default router;

@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import sharp from 'sharp';
 import catalogueController from './catalogueController.js';
-import taggerController from './taggerController.js';
+import tagsController from './tagsController.js';
 import morgan from 'morgan';
 
 const app = express();
@@ -151,7 +151,7 @@ app.get('/download/:filename', (req, res) => {
 });
 
 app.use('/catalogue', catalogueController);
-app.use('/tagger', taggerController);
+app.use('/', tagsController);
 
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

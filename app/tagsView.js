@@ -10,6 +10,18 @@ import { imagesMenu } from './imagesView.js';
 
 inquirer.registerPrompt('file-tree-selection', fileSelector);
 
+async function generateTagsForAllImages() {
+  try {
+    const response = await axios.post('http://localhost:3000/tags/tag-images');
+    console.log(response.data);
+  } catch (error) {
+    console.error(
+      'Error:',
+      error.response ? error.response.data : error.message
+    );
+  }
+}
+
 export async function tagsMenu() {
   try {
     const answers = await inquirer.prompt([
@@ -29,7 +41,7 @@ export async function tagsMenu() {
 
     switch (answers.tagChoice) {
       case 'Generate for All Images':
-        // Implement your logic for generating tags for all images
+        await generateTagsForAllImages();
         break;
       case 'Generate Tags for Catalogue':
         // Implement your logic for generating tags for a catalogue
