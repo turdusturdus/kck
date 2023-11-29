@@ -7,6 +7,40 @@ import os from 'os';
 
 import { mainMenu } from './index.js';
 
+async function renameImage(originalName) {
+  try {
+    const { newName } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'newName',
+        message: 'Enter the new name for the image:',
+        validate: (input) => input.trim() !== '' && input !== originalName,
+      },
+    ]);
+
+    const response = await axios.post('http://localhost:3000/image/rename', {
+      originalName,
+      newName,
+    });
+    console.clear();
+
+    console.log(response.data);
+
+    await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'continue',
+        message: 'Press Enter to continue...',
+      },
+    ]);
+  } catch (error) {
+    console.error(
+      'Error:',
+      error.response ? error.response.data : error.message
+    );
+  }
+}
+
 async function deleteImage(filename) {
   try {
     const response = await axios.delete(
@@ -60,8 +94,7 @@ async function allImages() {
       {
         type: 'list',
         name: 'selectedImage',
-        message:
-          'Select an image to view its metadata, or choose "Back to Menu" to return:',
+        message: 'Select an image, or choose "Back to Menu" to return:',
         choices: imageChoices,
       },
     ]);
@@ -99,7 +132,7 @@ async function allImages() {
 
     switch (action) {
       case 'Rename':
-        // Implement rename logic
+        await renameImage(selectedMetadata.originalName);
         break;
       case 'Show Metadata':
         await showMetadata(selectedMetadata);
@@ -167,6 +200,8 @@ async function uploadImage() {
           headers: formData.getHeaders(),
         }
       );
+
+      console.clear();
 
       console.log('Upload successful');
     } else {

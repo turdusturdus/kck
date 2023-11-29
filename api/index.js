@@ -13,6 +13,7 @@ const port = 3000;
 
 const originalsDir = 'storage/originals';
 const thumbnailsDir = 'storage/thumbnails';
+const metadataFilePath = 'storage/metadata.json';
 fs.mkdirSync(originalsDir, { recursive: true });
 fs.mkdirSync(thumbnailsDir, { recursive: true });
 
@@ -75,7 +76,6 @@ app.post('/image', upload.array('image', 10), async (req, res) => {
   try {
     let metadataArray = [];
 
-    const metadataFilePath = path.join('storage', 'metadata.json');
     if (fs.existsSync(metadataFilePath)) {
       const existingMetadata = fs.readFileSync(metadataFilePath);
       metadataArray = JSON.parse(existingMetadata);
@@ -120,6 +120,50 @@ app.post('/image', upload.array('image', 10), async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send('Error processing files');
+  }
+});
+
+app.post('/image/rename', async (req, res) => {
+  const { originalName, newName } = req.body;
+  const originalFilePath = path.join(originalsDir, originalName);
+  const newFilePath = path.join(originalsDir, newName);
+  const originalThumbnailPath = path.join(
+    thumbnailsDir,
+    `thumbnail-${originalName}`
+  );
+  const newThumbnailPath = path.join(thumbnailsDir, `thumbnail-${newName}`);
+
+  try {
+    if (fs.existsSync(originalFilePath)) {
+      fs.renameSync(originalFilePath, newFilePath);
+      if (fs.existsSync(originalThumbnailPath)) {
+        fs.renameSync(originalThumbnailPath, newThumbnailPath);
+      }
+
+      if (fs.existsSync(metadataFilePath)) {
+        const metadataArray = JSON.parse(fs.readFileSync(metadataFilePath));
+        const metadataIndex = metadataArray.findIndex(
+          (meta) => meta.originalName === originalName
+        );
+
+        if (metadataIndex !== -1) {
+          metadataArray[metadataIndex].originalName = newName;
+          metadataArray[metadataIndex].path = newFilePath;
+          metadataArray[metadataIndex].thumbnailPath = newThumbnailPath;
+          fs.writeFileSync(
+            metadataFilePath,
+            JSON.stringify(metadataArray, null, 2)
+          );
+        }
+      }
+
+      res.send('Image renamed successfully');
+    } else {
+      res.status(404).send('Original file not found');
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error renaming file');
   }
 });
 
